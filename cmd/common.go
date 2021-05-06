@@ -39,6 +39,10 @@ type template struct {
 	Versions   []version
 }
 
+// func (t template) isEmpty() bool {
+// 	return t.Id == ""
+// }
+
 type version struct {
 	Id                   string
 	TemplateId           string `json:"template_id"`
@@ -130,15 +134,6 @@ func getTemplates() templates {
 	return jsonMap
 }
 
-func findActiveVersion(template template) *version {
-	for _, version := range template.Versions {
-		if version.Active == 1 {
-			return &version
-		}
-	}
-	return &version{}
-}
-
 func readFile(file string) string {
 	fileContent, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -159,10 +154,22 @@ func getTemplateFromFile(file string) template {
 
 func getTemplateByName(name string) *template {
 	templates := getTemplates()
+	var template *template
 	for _, template := range templates.Templates {
 		if template.Name == name {
 			return &template
 		}
 	}
-	return &template{}
+
+	return template
+}
+
+func findActiveVersion(template template) *version {
+	var version *version
+	for _, version := range template.Versions {
+		if version.Active == 1 {
+			return &version
+		}
+	}
+	return version
 }

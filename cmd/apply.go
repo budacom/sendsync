@@ -17,10 +17,7 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"path/filepath"
 
 	"github.com/sendgrid/sendgrid-go"
@@ -43,24 +40,82 @@ to quickly create a Cobra application.`,
 		fmt.Println("value of the flag name :" + file)
 
 		dir := filepath.Dir(file)
-		template := getTemplateFromFile(file)
+		fileTemplate := getTemplateFromFile(file)
+		activeVersionFile := findActiveVersion(fileTemplate)
+		if activeVersionFile == nil {
+			panic("no active version found on file, aborting")
+		}
+
 		html := readFile(filepath.Join(dir, "content.html"))
 		plain := readFile(filepath.Join(dir, "content.txt"))
 		// vamos a sendgrid
 
-		targetTemplate, err := getTemplateByName(template.Name)
-		if err != nil {
-			fmt.Println(err)
+		targetTemplate := getTemplateByName(fileTemplate.Name)
+		//fmt.Println(targetTemplate)
+		if targetTemplate == nil {
+			fmt.Println("No template found, creating...")
+			request := sendgrid.GetRequest(apiKey, "/v3/templates", host)
+			request.Method = "POST"
+
+			templatePayload := template{
+				Name:       fileTemplate.Name,
+				Generation: fileTemplate.Generation,
+			}
+
+			templatePayloadJson, err := json.Marshal(templatePayload)
+			if err != nil {
+				panic(err)
+			}
+
+			request.Body = templatePayloadJson
+			response, err := sendgrid.API(request)
+			if err != nil {
+				panic(err)
+			}
+
+			err = json.Unmarshal([]byte(response.Body), &targetTemplate)
+			if err != nil {
+				panic(err)
+			}
 		}
 
-		activeVersion, err := findActiveVersion(targetTemplate)
-		if err != nil {
-			fmt.Println(err)
+		activeVersion := findActiveVersion(*targetTemplate)
+		fmt.Println(activeVersion)
+		if activeVersion == nil {
+			fmt.Println("no active version found, creating...")
+
+			activeVersion = &version{
+				Active:     1,
+				Name:       activeVersionFile.Name,
+				TemplateId: targetTemplate.Id,
+				Subject:    activeVersionFile.Subject,
+			}
+
+			templatePayloadJson, err := json.Marshal(activeVersion)
+			if err != nil {
+				panic(err)
+			}
+
+			requestUri := fmt.Sprintf("/v3/templates/%s/versions", targetTemplate.Id)
+			request := sendgrid.GetRequest(apiKey, requestUri, host)
+			request.Body = templatePayloadJson
+			request.Method = "POST"
+
+			response, err := sendgrid.API(request)
+			if err != nil {
+				panic(err)
+			}
+
+			err = json.Unmarshal([]byte(response.Body), &activeVersion)
+			if err != nil {
+				panic(err)
+			}
 		}
+
 		activeVersion.HtmlContent = html
 		activeVersion.PlainContent = plain
 
-		requestUri := fmt.Sprintf("/v3/templates/%s/versions/%s", activeVersion.TemplateId, activeVersion.Id)
+		requestUri := fmt.Sprintf("/v3/templates/%s/versions/%s", targetTemplate.Id, activeVersion.Id)
 		request := sendgrid.GetRequest(apiKey, requestUri, host)
 		request.Method = "PATCH"
 
@@ -72,41 +127,13 @@ to quickly create a Cobra application.`,
 		request.Body = versionJson
 		response, err := sendgrid.API(request)
 		if err != nil {
-			log.Println(err)
+			panic(err)
 		} else {
 			fmt.Println(response.StatusCode)
 			fmt.Println(response.Body)
 			fmt.Println(response.Headers)
 		}
 	},
-}
-
-func readFile(file string) string {
-	fileContent, err := ioutil.ReadFile(file)
-	if err != nil {
-		panic(err)
-	}
-	return string(fileContent)
-}
-
-func getTemplateFromFile(file string) template {
-	var templateFromFile template
-	templateJson := readFile(file)
-	err := json.Unmarshal([]byte(templateJson), &templateFromFile)
-	if err != nil {
-		panic(err)
-	}
-	return templateFromFile
-}
-
-func getTemplateByName(name string) (template, error) {
-	templates := getTemplates()
-	for _, template := range templates.Templates {
-		if template.Name == name {
-			return template, nil
-		}
-	}
-	return template{}, errors.New("no template found for name")
 }
 
 func init() {
