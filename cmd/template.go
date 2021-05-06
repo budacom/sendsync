@@ -17,46 +17,11 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"strings"
 
-	"os"
-
-	"github.com/sendgrid/sendgrid-go"
 	"github.com/spf13/cobra"
 )
-
-type template struct {
-	Generation string
-	Id         string
-	Name       string
-	UpdatedAt  string `json:"updated_at"`
-	Versions   []version
-}
-
-type version struct {
-	Active               int
-	Editor               string
-	Id                   string
-	Name                 string
-	TemplateId           string `json:"template_id"`
-	ThumbnailUrl         string `json:"thumbnail_url"`
-	UpdatedAt            string `json:"updated_at"`
-	HtmlContent          string `json:"html_content"`
-	PlainContent         string `json:"plain_content"`
-	Subject              string
-	GeneratePlainContent bool `json:"generate_plain_content"`
-}
-
-type templates struct {
-	Templates []template
-}
-
-var apiKey = os.Getenv("SENDGRID_API_KEY")
-var host = "https://api.sendgrid.com"
 
 // templateCmd represents the get command
 var templateCmd = &cobra.Command{
@@ -91,62 +56,6 @@ to quickly create a Cobra application.`,
 			writeFile(fmt.Sprintf("%s/content.txt", dirPath), activeVersion.PlainContent)
 		}
 	},
-}
-
-func findActiveVersion(template template) (version, error) {
-	for _, version := range template.Versions {
-		if version.Active == 1 {
-			return version, nil
-		}
-	}
-	return version{}, errors.New("active version not found")
-}
-
-func writeFile(path string, content string) {
-	err := ioutil.WriteFile(path, []byte(content), 0644)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-func updateTemplate(template template) {
-	requestPath := fmt.Sprintf("/v3/templates/%s", template.Id)
-	request := sendgrid.GetRequest(apiKey, requestPath, host)
-	request.Method = "GET"
-	response, err := sendgrid.API(request)
-	if err != nil {
-		log.Println(err)
-	}
-	err = json.Unmarshal([]byte(response.Body), &template)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func makeDir(path string) {
-	err := os.Mkdir(path, 0755)
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
-func getTemplates() templates {
-	request := sendgrid.GetRequest(apiKey, "/v3/templates", host)
-	request.Method = "GET"
-	queryParams := make(map[string]string)
-	queryParams["generations"] = "dynamic"
-	request.QueryParams = queryParams
-	response, err := sendgrid.API(request)
-	if err != nil {
-		log.Println(err)
-	}
-
-	var jsonMap templates
-	err = json.Unmarshal([]byte(response.Body), &jsonMap)
-	if err != nil {
-		panic(err)
-	}
-	return jsonMap
 }
 
 func init() {

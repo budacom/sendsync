@@ -16,8 +16,14 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"path/filepath"
 
+	"github.com/sendgrid/sendgrid-go"
 	"github.com/spf13/cobra"
 )
 
@@ -35,13 +41,79 @@ to quickly create a Cobra application.`,
 		fmt.Println("apply called")
 		file, _ := cmd.Flags().GetString("file")
 		fmt.Println("value of the flag name :" + file)
+
+		dir := filepath.Dir(file)
+		template := getTemplateFromFile(file)
+		html := readFile(filepath.Join(dir, "content.html"))
+		plain := readFile(filepath.Join(dir, "content.txt"))
+		// vamos a sendgrid
+
+		targetTemplate, err := getTemplateByName(template.Name)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		activeVersion, err := findActiveVersion(targetTemplate)
+		if err != nil {
+			fmt.Println(err)
+		}
+		activeVersion.HtmlContent = html
+		activeVersion.PlainContent = plain
+
+		requestUri := fmt.Sprintf("/v3/templates/%s/versions/%s", activeVersion.TemplateId, activeVersion.Id)
+		request := sendgrid.GetRequest(apiKey, requestUri, host)
+		request.Method = "PATCH"
+
+		versionJson, err := json.Marshal(activeVersion)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		request.Body = versionJson
+		response, err := sendgrid.API(request)
+		if err != nil {
+			log.Println(err)
+		} else {
+			fmt.Println(response.StatusCode)
+			fmt.Println(response.Body)
+			fmt.Println(response.Headers)
+		}
 	},
+}
+
+func readFile(file string) string {
+	fileContent, err := ioutil.ReadFile(file)
+	if err != nil {
+		panic(err)
+	}
+	return string(fileContent)
+}
+
+func getTemplateFromFile(file string) template {
+	var templateFromFile template
+	templateJson := readFile(file)
+	err := json.Unmarshal([]byte(templateJson), &templateFromFile)
+	if err != nil {
+		panic(err)
+	}
+	return templateFromFile
+}
+
+func getTemplateByName(name string) (template, error) {
+	templates := getTemplates()
+	for _, template := range templates.Templates {
+		if template.Name == name {
+			return template, nil
+		}
+	}
+	return template{}, errors.New("no template found for name")
 }
 
 func init() {
 	rootCmd.AddCommand(applyCmd)
 	applyCmd.PersistentFlags().StringP("file", "f", "", "Template manifest to apply")
 	applyCmd.MarkPersistentFlagRequired("file")
+
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
