@@ -48,12 +48,13 @@ to quickly create a Cobra application.`,
 			}
 			writeFile(fmt.Sprintf("%s/template.json", dirPath), string(templateJson))
 			updateTemplate(template)
-			activeVersion, err := findActiveVersion(template)
-			if err != nil {
-				fmt.Println(err)
+			activeVersion := findActiveVersion(template)
+			if activeVersion == nil {
+				fmt.Println("no active version found")
+			} else {
+				writeFile(fmt.Sprintf("%s/content.html", dirPath), activeVersion.HtmlContent)
+				writeFile(fmt.Sprintf("%s/content.txt", dirPath), activeVersion.PlainContent)
 			}
-			writeFile(fmt.Sprintf("%s/content.html", dirPath), activeVersion.HtmlContent)
-			writeFile(fmt.Sprintf("%s/content.txt", dirPath), activeVersion.PlainContent)
 		}
 	},
 }
