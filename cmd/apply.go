@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+Copyright © 2021 Buda.com
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,13 +27,20 @@ import (
 // applyCmd represents the apply command
 var applyCmd = &cobra.Command{
 	Use:   "apply",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Apply desired template file to Sendgrid ",
+	Long: `Given structure of a Sendgrid transactional template:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+(Folder) Name of email 
+	(File) template.json
+	(File) content.html
+	(File) content.txt
+
+Apply changes to Sendgrid application identified by its API_KEY stored on
+enviroment variable SENDGRID_API_KEY pointing to template file.
+As example:
+
+sendsync apply -f templates/cool_email/template.json
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("apply called")
 		file, _ := cmd.Flags().GetString("file")
@@ -140,14 +147,4 @@ func init() {
 	rootCmd.AddCommand(applyCmd)
 	applyCmd.PersistentFlags().StringP("file", "f", "", "Template manifest to apply")
 	applyCmd.MarkPersistentFlagRequired("file")
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// applyCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// applyCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
