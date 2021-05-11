@@ -13,14 +13,14 @@ import (
 var apiKey = os.Getenv("SENDGRID_API_KEY")
 var host = "https://api.sendgrid.com"
 
-type template struct {
+type Template struct {
 	Generation string
 	Name       string
 	Id         string
-	Versions   []version
+	Versions   []Version
 }
 
-type version struct {
+type Version struct {
 	Id                   string
 	TemplateId           string `json:"template_id"`
 	Active               int
@@ -34,7 +34,7 @@ type version struct {
 }
 
 type templates struct {
-	Templates []template
+	Templates []Template
 }
 
 func writeFile(path string, content string) {
@@ -44,7 +44,7 @@ func writeFile(path string, content string) {
 	}
 }
 
-func updateTemplate(template template) {
+func (template Template) fetchAndUpdateTemplate() {
 	requestPath := fmt.Sprintf("/v3/templates/%s", template.Id)
 	request := sendgrid.GetRequest(apiKey, requestPath, host)
 	request.Method = "GET"
@@ -52,7 +52,11 @@ func updateTemplate(template template) {
 	if err != nil {
 		log.Println(err)
 	}
-	err = json.Unmarshal([]byte(response.Body), &template)
+	template.UpdateTemplateFromJson(response.Body)
+}
+
+func (template *Template) UpdateTemplateFromJson(body string) {
+	err := json.Unmarshal([]byte(body), &template)
 	if err != nil {
 		panic(err)
 	}
@@ -75,7 +79,6 @@ func getTemplates() templates {
 	if err != nil {
 		log.Println(err)
 	}
-
 	var jsonMap templates
 	err = json.Unmarshal([]byte(response.Body), &jsonMap)
 	if err != nil {
@@ -92,19 +95,16 @@ func readFile(file string) string {
 	return string(fileContent)
 }
 
-func getTemplateFromFile(file string) template {
-	var templateFromFile template
+func getTemplateFromFile(file string) Template {
+	var templateFromFile Template
 	templateJson := readFile(file)
-	err := json.Unmarshal([]byte(templateJson), &templateFromFile)
-	if err != nil {
-		panic(err)
-	}
+	templateFromFile.UpdateTemplateFromJson(templateJson)
 	return templateFromFile
 }
 
-func getTemplateByName(name string) *template {
+func getTemplateByName(name string) *Template {
 	templates := getTemplates()
-	var template *template
+	var template *Template
 	for _, template := range templates.Templates {
 		if template.Name == name {
 			return &template
@@ -114,8 +114,8 @@ func getTemplateByName(name string) *template {
 	return template
 }
 
-func findActiveVersion(template template) *version {
-	var version *version
+func (template Template) FindActiveVersion() *Version {
+	var version *Version
 	for _, version := range template.Versions {
 		if version.Active == 1 {
 			return &version

@@ -7,6 +7,8 @@ require (
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
+	github.com/onsi/ginkgo v1.16.2 // indirect
+	github.com/onsi/gomega v1.12.0 // indirect
 	github.com/pelletier/go-toml v1.9.0 // indirect
 	github.com/sendgrid/rest v2.6.4+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.10.0+incompatible

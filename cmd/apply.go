@@ -31,7 +31,7 @@ var applyCmd = &cobra.Command{
 	Short: "Apply desired template file to Sendgrid ",
 	Long: `Given structure of a Sendgrid transactional template:
 
-(Folder) Name of email 
+(Folder) Name of email
 	(File) template.json
 	(File) content.html
 	(File) content.txt
@@ -50,12 +50,12 @@ sendsync apply -f templates/cool_email/template.json
 		file, _ := cmd.Flags().GetString("file")
 		dir := filepath.Dir(file)
 		fileTemplate := getTemplateFromFile(file)
-		activeVersionFile := findActiveVersion(fileTemplate)
 
 		log.WithFields(log.Fields{
 			"filename": file,
 		}).Info("Started applying changes in template")
 
+		activeVersionFile := fileTemplate.FindActiveVersion()
 		if activeVersionFile == nil {
 			log.WithFields(log.Fields{
 				"template": fileTemplate,
@@ -77,7 +77,7 @@ sendsync apply -f templates/cool_email/template.json
 			request := sendgrid.GetRequest(apiKey, "/v3/templates", host)
 			request.Method = "POST"
 
-			templatePayload := template{
+			templatePayload := Template{
 				Name:       fileTemplate.Name,
 				Generation: fileTemplate.Generation,
 			}
@@ -115,14 +115,13 @@ sendsync apply -f templates/cool_email/template.json
 			}).Debug("Template created succesfully")
 		}
 
-		activeVersion := findActiveVersion(*targetTemplate)
-
+		activeVersion := targetTemplate.FindActiveVersion()
 		if activeVersion == nil {
 			log.WithFields(log.Fields{
 				"template": targetTemplate,
 			}).Debug("No active version found for template, creating...")
 
-			activeVersion = &version{
+			activeVersion = &Version{
 				Active:     1,
 				Name:       activeVersionFile.Name,
 				TemplateId: targetTemplate.Id,
