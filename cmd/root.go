@@ -27,6 +27,8 @@ import (
 
 var cfgFile string
 
+var verbose bool
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "sendsync",
@@ -34,11 +36,15 @@ var rootCmd = &cobra.Command{
 	Long: `While Sendgrid does not provide different enviroments it is to hard
 	to mantain a way to test emails on applications that does not face production.
 
-We build sendsync thinking to syncronize a repository to any app of Sendgrid so it is easy
+We built sendsync thinking to syncronize a repository to any app of Sendgrid so it is easy
 to deploy all emails to a new app`,
 }
 
 func Execute() {
+	rootCmd.PersistentFlags().BoolVarP(
+		&verbose, "verbose", "v", false,
+		"Verbose output",
+	)
 	cobra.CheckErr(rootCmd.Execute())
 }
 
