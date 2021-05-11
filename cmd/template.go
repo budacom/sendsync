@@ -51,8 +51,8 @@ var templateCmd = &cobra.Command{
 				}).Warn(err)
 			}
 			writeFile(fmt.Sprintf("%s/template.json", dirPath), string(templateJson))
-			updateTemplate(template)
-			activeVersion := findActiveVersion(template)
+			template.fetchAndUpdateTemplate()
+			activeVersion := template.FindActiveVersion()
 			if activeVersion == nil {
 				log.WithFields(log.Fields{
 					"template": template,
