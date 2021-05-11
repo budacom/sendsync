@@ -25,4 +25,4 @@ sendsync apply -f templates/name_of_the_template/template.json
 ```
 
 ## Questions
-Have a question? Come find us in #platform
+Have a question? Contact us in github@buda.com
