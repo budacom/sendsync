@@ -24,5 +24,13 @@ To publish a specific template:
 sendsync apply -f templates/name_of_the_template/template.json
 ```
 
+
+## Testing
+
+Run
+```bash
+go test sendsync/cmd
+```
+
 ## Questions
 Have a question? Contact us in github@buda.com
