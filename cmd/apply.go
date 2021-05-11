@@ -18,6 +18,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"path/filepath"
 
 	"github.com/sendgrid/sendgrid-go"
@@ -42,25 +43,23 @@ As example:
 sendsync apply -f templates/cool_email/template.json
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("apply called")
 		file, _ := cmd.Flags().GetString("file")
-		fmt.Println("value of the flag name :" + file)
-
 		dir := filepath.Dir(file)
 		fileTemplate := getTemplateFromFile(file)
 		activeVersionFile := findActiveVersion(fileTemplate)
+
 		if activeVersionFile == nil {
-			panic("no active version found on file, aborting")
+			log.Fatal("No active version found on file, aborting")
 		}
 
 		html := readFile(filepath.Join(dir, "content.html"))
 		plain := readFile(filepath.Join(dir, "content.txt"))
-		// vamos a sendgrid
 
+		log.Printf("Retriving template %s from API", fileTemplate.Name)
 		targetTemplate := getTemplateByName(fileTemplate.Name)
-		//fmt.Println(targetTemplate)
+
 		if targetTemplate == nil {
-			fmt.Println("No template found, creating...")
+			log.Printf("No template %s found, creating...", fileTemplate.Name)
 			request := sendgrid.GetRequest(apiKey, "/v3/templates", host)
 			request.Method = "POST"
 
@@ -71,25 +70,26 @@ sendsync apply -f templates/cool_email/template.json
 
 			templatePayloadJson, err := json.Marshal(templatePayload)
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
-
 			request.Body = templatePayloadJson
 			response, err := sendgrid.API(request)
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 
+			log.Printf("Got %d status from API when creating template %s", response.StatusCode, templatePayload.Name)
 			err = json.Unmarshal([]byte(response.Body), &targetTemplate)
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
+			log.Printf("Template %s created succesfully", targetTemplate.Name)
 		}
 
 		activeVersion := findActiveVersion(*targetTemplate)
-		fmt.Println(activeVersion)
+
 		if activeVersion == nil {
-			fmt.Println("no active version found, creating...")
+			log.Printf("No active version found for template %s, creating...", targetTemplate.Name)
 
 			activeVersion = &version{
 				Active:     1,
@@ -100,7 +100,7 @@ sendsync apply -f templates/cool_email/template.json
 
 			templatePayloadJson, err := json.Marshal(activeVersion)
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 
 			requestUri := fmt.Sprintf("/v3/templates/%s/versions", targetTemplate.Id)
@@ -110,13 +110,15 @@ sendsync apply -f templates/cool_email/template.json
 
 			response, err := sendgrid.API(request)
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 
+			log.Printf("Got %d status from API when creating version template %s", response.StatusCode, activeVersion.Name)
 			err = json.Unmarshal([]byte(response.Body), &activeVersion)
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
+			log.Printf("Version %s for template %s created succesfully", activeVersion.Name, targetTemplate.Name)
 		}
 
 		activeVersion.HtmlContent = html
@@ -128,17 +130,17 @@ sendsync apply -f templates/cool_email/template.json
 
 		versionJson, err := json.Marshal(activeVersion)
 		if err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
 		}
 
 		request.Body = versionJson
+
+		log.Printf("Updating template %s with version %s", targetTemplate.Name, activeVersion.Name)
 		response, err := sendgrid.API(request)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		} else {
-			fmt.Println(response.StatusCode)
-			fmt.Println(response.Body)
-			fmt.Println(response.Headers)
+			log.Printf("Got %d status from API when updating template %s with version %s", response.StatusCode, targetTemplate.Name, activeVersion.Name)
 		}
 	},
 }
