@@ -21,7 +21,7 @@ sendsync get templates
 
 To publish a specific template:
 ```bash
-sendsync apply templates/name_of_the_template/template.json
+sendsync apply -f templates/name_of_the_template/template.json
 ```
 
 ## Questions
