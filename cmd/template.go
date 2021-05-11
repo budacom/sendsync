@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+Copyright © 2021 Buda.com
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,24 +18,16 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-// templateCmd represents the get command
 var templateCmd = &cobra.Command{
 	Use:   "template",
-	Short: "A brief description of your command template",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Fetch templates from sendgrid",
+	Long: `Fetch all templates from a Sendgrid Application identified by SENDGRID_API_KEY
+	enviroment variable`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("get called template")
-		fmt.Println("Here are the arguments of card command : " + strings.Join(args, ","))
 		templates := getTemplates()
 		makeDir("templates")
 		for _, template := range templates.Templates {
