@@ -4,33 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/sendgrid/sendgrid-go"
+	log "github.com/sirupsen/logrus"
 )
 
 var apiKey = os.Getenv("SENDGRID_API_KEY")
 var host = "https://api.sendgrid.com"
-
-/*type storedTemplate struct {
-	Generation string
-	Name       string
-	Versions   []storedVersion
-}
-
-type storedVersion struct {
-	Id                   string `json:"-"`
-	TemplateId           string `json:"-"`
-	Active               int
-	Editor               string
-	Name                 string
-	ThumbnailUrl         string `json:"thumbnail_url"`
-	HtmlContent          string `json:"html_content,omitempty"`
-	PlainContent         string `json:"plain_content,omitempty"`
-	Subject              string
-	GeneratePlainContent bool `json:"generate_plain_content"`
-}*/
 
 type template struct {
 	Generation string
@@ -38,10 +19,6 @@ type template struct {
 	Id         string
 	Versions   []version
 }
-
-// func (t template) isEmpty() bool {
-// 	return t.Id == ""
-// }
 
 type version struct {
 	Id                   string
@@ -59,33 +36,6 @@ type version struct {
 type templates struct {
 	Templates []template
 }
-
-/*func templateToStoredTemplate(template *template) *storedTemplate {
-	var versions []storedVersion
-	for _, version := range template.Versions {
-		versions = append(versions, *versionToStoredVersion(version))
-	}
-
-	storedTemplate := &storedTemplate{
-		Generation: template.Generation,
-		Name:       template.Name,
-		Versions:   versions,
-	}
-	return storedTemplate
-}
-
-func versionToStoredVersion(version *version) *storedVersion {
-		Active:               version.Active,
-		Editor:               version.Editor,
-		Name:                 version.Name,
-		ThumbnailUrl:         version.ThumbnailUrl,
-		HtmlContent:          version.HtmlContent,
-		PlainContent:         version.PlainContent,
-		Subject:              version.Subject,
-		GeneratePlainContent: version.GeneratePlainContent,
-	}
-	return storedVersion
-}*/
 
 func writeFile(path string, content string) {
 	err := ioutil.WriteFile(path, []byte(content), 0644)
