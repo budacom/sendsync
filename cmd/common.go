@@ -40,7 +40,10 @@ type templates struct {
 func writeFile(path string, content string) {
 	err := ioutil.WriteFile(path, []byte(content), 0644)
 	if err != nil {
-		log.Println(err)
+		log.WithFields(log.Fields{
+			"path":    path,
+			"content": content,
+		}).Warn(err)
 	}
 }
 
@@ -50,7 +53,10 @@ func (template Template) fetchAndUpdateTemplate() {
 	request.Method = "GET"
 	response, err := sendgrid.API(request)
 	if err != nil {
-		log.Println(err)
+		log.WithFields(log.Fields{
+			"template": template,
+			"request":  request,
+		}).Warn(err)
 	}
 	template.UpdateTemplateFromJson(response.Body)
 }
@@ -58,14 +64,19 @@ func (template Template) fetchAndUpdateTemplate() {
 func (template *Template) UpdateTemplateFromJson(body string) {
 	err := json.Unmarshal([]byte(body), &template)
 	if err != nil {
-		panic(err)
+		log.WithFields(log.Fields{
+			"body":     body,
+			"template": template,
+		}).Fatal(err)
 	}
 }
 
 func makeDir(path string) {
 	err := os.Mkdir(path, 0755)
 	if err != nil {
-		fmt.Println(err)
+		log.WithFields(log.Fields{
+			"path": path,
+		}).Warn(err)
 	}
 }
 
@@ -77,12 +88,18 @@ func getTemplates() templates {
 	request.QueryParams = queryParams
 	response, err := sendgrid.API(request)
 	if err != nil {
-		log.Println(err)
+		log.WithFields(log.Fields{
+			"request":  request,
+			"response": response,
+		}).Warn(err)
 	}
 	var jsonMap templates
 	err = json.Unmarshal([]byte(response.Body), &jsonMap)
 	if err != nil {
-		panic(err)
+		log.WithFields(log.Fields{
+			"body":    response.Body,
+			"jsonMap": jsonMap,
+		}).Fatal(err)
 	}
 	return jsonMap
 }
@@ -90,7 +107,10 @@ func getTemplates() templates {
 func readFile(file string) string {
 	fileContent, err := ioutil.ReadFile(file)
 	if err != nil {
-		panic(err)
+		log.WithFields(log.Fields{
+			"file":        file,
+			"fileContent": fileContent,
+		}).Fatal(err)
 	}
 	return string(fileContent)
 }
