@@ -165,6 +165,8 @@ sendsync apply -f templates/cool_email/template.json
 
 		activeVersion.HtmlContent = html
 		activeVersion.PlainContent = plain
+		activeVersion.Subject = activeVersionFile.Subject
+		activeVersion.GeneratePlainContent = false
 
 		requestUri := fmt.Sprintf("/v3/templates/%s/versions/%s", targetTemplate.Id, activeVersion.Id)
 		request := sendgrid.GetRequest(apiKey, requestUri, host)
