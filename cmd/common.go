@@ -21,16 +21,15 @@ type Template struct {
 }
 
 type Version struct {
-	Id                   string
+	Id                   string `json:"id"`
 	TemplateId           string `json:"template_id"`
-	Active               int
-	Editor               string
-	Name                 string
+	Active               int    `json:"active"`
+	Name                 string `json:"name"`
 	ThumbnailUrl         string `json:"thumbnail_url"`
 	HtmlContent          string `json:"html_content,omitempty"`
 	PlainContent         string `json:"plain_content,omitempty"`
-	Subject              string
-	GeneratePlainContent bool `json:"generate_plain_content"`
+	Subject              string `json:"subject,omitempty"`
+	GeneratePlainContent bool   `json:"generate_plain_content"`
 }
 
 type templates struct {
