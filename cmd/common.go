@@ -14,10 +14,10 @@ var apiKey = os.Getenv("SENDGRID_API_KEY")
 var host = "https://api.sendgrid.com"
 
 type Template struct {
-	Generation string
-	Name       string
-	Id         string
-	Versions   []Version
+	Generation string    `json:"generation"`
+	Name       string    `json:"name"`
+	Id         string    `json:"id"`
+	Versions   []Version `json:"versions"`
 }
 
 type Version struct {
